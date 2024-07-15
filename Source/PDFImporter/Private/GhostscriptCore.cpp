@@ -5,20 +5,20 @@
 #include "Misc/FileHelper.h"
 #include "GenericPlatform/GenericPlatformProcess.h"
 #include "HAL/FileManager.h"
-#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "IImageWrapperModule.h"
 #include "IImageWrapper.h"
-#include "IPluginManager.h"
+#include "Interfaces/IPluginManager.h"
 
-#include "AllowWindowsPlatformTypes.h"
+#include "Windows/AllowWindowsPlatformTypes.h"
 #include <Windows.h>
-#include "HideWindowsPlatformTypes.h"
+#include "Windows/HideWindowsPlatformTypes.h"
 
 const FString FGhostscriptCore::PagesDirectoryPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(IPluginManager::Get().FindPlugin(TEXT("PDFImporter"))->GetBaseDir(), TEXT("Content")));
 
 FGhostscriptCore::FGhostscriptCore()
 {
-	// dllƒtƒ@ƒCƒ‹‚ÌƒpƒX‚ğæ“¾
+	// dllãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ã‚’å–å¾—
 	FString GhostscriptDllPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectPluginsDir(), TEXT("PDFImporter"), TEXT("ThirdParty")));
 #ifdef _WIN64
 	GhostscriptDllPath = FPaths::Combine(GhostscriptDllPath, TEXT("Win64"));
@@ -27,14 +27,14 @@ FGhostscriptCore::FGhostscriptCore()
 #endif
 	GhostscriptDllPath = FPaths::Combine(GhostscriptDllPath, TEXT("gsdll.dll"));
 
-	// ƒ‚ƒWƒ…[ƒ‹‚ğƒ[ƒh
+	// ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã‚’ãƒ­ãƒ¼ãƒ‰
 	GhostscriptModule = FPlatformProcess::GetDllHandle(*GhostscriptDllPath);
 	if (GhostscriptModule == nullptr)
 	{
 		UE_LOG(PDFImporter, Fatal, TEXT("Failed to load Ghostscript module"));
 	}
 
-	// ŠÖ”ƒ|ƒCƒ“ƒ^‚ğæ“¾
+	// é–¢æ•°ãƒã‚¤ãƒ³ã‚¿ã‚’å–å¾—
 	CreateInstance = (CreateAPIInstance)FPlatformProcess::GetDllExport(GhostscriptModule, TEXT("gsapi_new_instance"));
 	DeleteInstance = (DeleteAPIInstance)FPlatformProcess::GetDllExport(GhostscriptModule, TEXT("gsapi_delete_instance"));
 	Init = (InitAPI)FPlatformProcess::GetDllExport(GhostscriptModule, TEXT("gsapi_init_with_args"));
@@ -60,14 +60,14 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 {
 	IFileManager& FileManager = IFileManager::Get();
 	
-	// PDF‚ª‚ ‚é‚©Šm”F
+	// PDFãŒã‚ã‚‹ã‹ç¢ºèª
 	if (!FileManager.FileExists(*InputPath))
 	{
 		UE_LOG(PDFImporter, Error, TEXT("File not found : %s"), *InputPath);
 		return nullptr;
 	}
 
-	// ì‹Æ—p‚ÌƒfƒBƒŒƒNƒgƒŠ‚ğì¬
+	// ä½œæ¥­ç”¨ã®ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’ä½œæˆ
 	FString TempDirPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("ConvertTemp"));
 	TempDirPath = FPaths::ConvertRelativePathToFull(TempDirPath);
 	if (FileManager.DirectoryExists(*TempDirPath))
@@ -77,18 +77,18 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 	FileManager.MakeDirectory(*TempDirPath);
 	UE_LOG(PDFImporter, Log, TEXT("A working directory has been created (%s)"), *TempDirPath);
 
-	// Ghostscript‚ğ—p‚¢‚ÄPDF‚©‚çjpg‰æ‘œ‚ğì¬
+	// Ghostscriptã‚’ç”¨ã„ã¦PDFã‹ã‚‰jpgç”»åƒã‚’ä½œæˆ
 	FString OutputPath = FPaths::Combine(TempDirPath, FPaths::GetBaseFilename(InputPath) + TEXT("%010d.jpg"));
 	TArray<UTexture2D*> Buffer; 
 	UPDF* PDFAsset = nullptr;
 
 	if (ConvertPdfToJpeg(InputPath, OutputPath, Dpi, FirstPage, LastPage))
 	{
-		// ‰æ‘œ‚Ìƒtƒ@ƒCƒ‹ƒpƒX‚ğæ“¾
+		// ç”»åƒã®ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹ã‚’å–å¾—
 		TArray<FString> PageNames;
 		IFileManager::Get().FindFiles(PageNames, *TempDirPath, L"jpg");
 		
-		// ì¬‚µ‚½jpg‰æ‘œ‚ğ“Ç‚İ‚Ş
+		// ä½œæˆã—ãŸjpgç”»åƒã‚’èª­ã¿è¾¼ã‚€
 		UTexture2D* TextureTemp;
 		for (const FString& PageName : PageNames)
 		{
@@ -110,7 +110,7 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 			}
 		}
 
-		// PDFƒAƒZƒbƒg‚ğì¬
+		// PDFã‚¢ã‚»ãƒƒãƒˆã‚’ä½œæˆ
 		PDFAsset = NewObject<UPDF>();
 
 		if (FirstPage <= 0 || LastPage <= 0 || FirstPage > LastPage)
@@ -124,7 +124,7 @@ UPDF* FGhostscriptCore::ConvertPdfToPdfAsset(const FString& InputPath, int Dpi, 
 		PDFAsset->Pages = Buffer;
 	}
 
-	// ì‹ÆƒfƒBƒŒƒNƒgƒŠ‚ğíœ
+	// ä½œæ¥­ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªã‚’å‰Šé™¤
 	if (FileManager.DirectoryExists(*TempDirPath))
 	{
 		FileManager.DeleteDirectory(*TempDirPath, true, true);
@@ -151,43 +151,43 @@ bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString&
 
 	const char* Args[20] =
 	{
-		// Ghostscript‚ª•W€o—Í‚Éî•ñ‚ğo—Í‚µ‚È‚¢‚æ‚¤‚É
+		// GhostscriptãŒæ¨™æº–å‡ºåŠ›ã«æƒ…å ±ã‚’å‡ºåŠ›ã—ãªã„ã‚ˆã†ã«
 		"-q",
 		"-dQUIET",
 
-		"-dPARANOIDSAFER",			// ƒZ[ƒtƒ‚[ƒh‚ÅÀs
-		"-dBATCH",					// Ghostscript‚ªƒCƒ“ƒ^ƒ‰ƒNƒeƒBƒuƒ‚[ƒh‚É‚È‚ç‚È‚¢‚æ‚¤‚É
-		"-dNOPAUSE",				// ƒy[ƒW‚²‚Æ‚Ìˆê’â~‚ğ‚µ‚È‚¢‚æ‚¤‚É
-		"-dNOPROMPT",				// ƒRƒ}ƒ“ƒhƒvƒƒ“ƒvƒg‚ª‚Å‚È‚¢‚æ‚¤‚É           
-		"-dMaxBitmap=500000000",	// ƒpƒtƒH[ƒ}ƒ“ƒX‚ğŒüã‚³‚¹‚é
-		"-dNumRenderingThreads=4",	// ƒ}ƒ‹ƒ`ƒRƒA‚ÅÀs
+		"-dPARANOIDSAFER",			// ã‚»ãƒ¼ãƒ•ãƒ¢ãƒ¼ãƒ‰ã§å®Ÿè¡Œ
+		"-dBATCH",					// GhostscriptãŒã‚¤ãƒ³ã‚¿ãƒ©ã‚¯ãƒ†ã‚£ãƒ–ãƒ¢ãƒ¼ãƒ‰ã«ãªã‚‰ãªã„ã‚ˆã†ã«
+		"-dNOPAUSE",				// ãƒšãƒ¼ã‚¸ã”ã¨ã®ä¸€æ™‚åœæ­¢ã‚’ã—ãªã„ã‚ˆã†ã«
+		"-dNOPROMPT",				// ã‚³ãƒãƒ³ãƒ‰ãƒ—ãƒ­ãƒ³ãƒ—ãƒˆãŒã§ãªã„ã‚ˆã†ã«           
+		"-dMaxBitmap=500000000",	// ãƒ‘ãƒ•ã‚©ãƒ¼ãƒãƒ³ã‚¹ã‚’å‘ä¸Šã•ã›ã‚‹
+		"-dNumRenderingThreads=4",	// ãƒãƒ«ãƒã‚³ã‚¢ã§å®Ÿè¡Œ
 
-		// o—Í‰æ‘œ‚ÌƒAƒ“ƒ`ƒGƒCƒŠƒAƒX‚â‰ğ‘œ“x‚È‚Ç
+		// å‡ºåŠ›ç”»åƒã®ã‚¢ãƒ³ãƒã‚¨ã‚¤ãƒªã‚¢ã‚¹ã‚„è§£åƒåº¦ãªã©
 		"-dAlignToPixels=0",
 		"-dGridFitTT=0",
 		"-dTextAlphaBits=4",
 		"-dGraphicsAlphaBits=4",
 
-		"-sDEVICE=jpeg",	// jpegŒ`®‚Åo—Í
-		"-sPAPERSIZE=a7",	// †‚ÌƒTƒCƒY
+		"-sDEVICE=jpeg",	// jpegå½¢å¼ã§å‡ºåŠ›
+		"-sPAPERSIZE=a7",	// ç´™ã®ã‚µã‚¤ã‚º
 
-		FirstPageBuffer.GetData(),	// 14 : n‚ß‚Ìƒy[ƒW‚ğw’è
-		LastPageBuffer.GetData(),	// 15 : I‚í‚è‚Ìƒy[ƒW‚ğw’è
-		DpiXBuffer.GetData(),		// 16 : ‰¡‚ÌDPI
-		DpiYBuffer.GetData(),		// 17 : c‚ÌDPI
-		OutputPathBuffer.GetData(), // 18 : o—ÍƒpƒX
-		InputPathBuffer.GetData()	// 19 : “ü—ÍƒpƒX
+		FirstPageBuffer.GetData(),	// 14 : å§‹ã‚ã®ãƒšãƒ¼ã‚¸ã‚’æŒ‡å®š
+		LastPageBuffer.GetData(),	// 15 : çµ‚ã‚ã‚Šã®ãƒšãƒ¼ã‚¸ã‚’æŒ‡å®š
+		DpiXBuffer.GetData(),		// 16 : æ¨ªã®DPI
+		DpiYBuffer.GetData(),		// 17 : ç¸¦ã®DPI
+		OutputPathBuffer.GetData(), // 18 : å‡ºåŠ›ãƒ‘ã‚¹
+		InputPathBuffer.GetData()	// 19 : å…¥åŠ›ãƒ‘ã‚¹
 	};
 
-	// Ghostscript‚ÌƒCƒ“ƒXƒ^ƒ“ƒX‚ğì¬
+	// Ghostscriptã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ã‚’ä½œæˆ
 	void* GhostscriptInstance = nullptr;
 	CreateInstance(&GhostscriptInstance, 0);
 	if (GhostscriptInstance != nullptr)
 	{
-		// Ghostscript‚ğÀs
+		// Ghostscriptã‚’å®Ÿè¡Œ
 		int Result = Init(GhostscriptInstance, 20, (char**)Args);
 
-		// Ghostscript‚ğI—¹
+		// Ghostscriptã‚’çµ‚äº†
 		Exit(GhostscriptInstance);
 		DeleteInstance(GhostscriptInstance);
 
@@ -204,28 +204,29 @@ bool FGhostscriptCore::ConvertPdfToJpeg(const FString& InputPath, const FString&
 
 bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture)
 {
-	// ‰æ‘œƒf[ƒ^‚ğ“Ç‚İ‚Ş
+	// ç”»åƒãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚€
 	TArray<uint8> RawFileData;
 	if (FFileHelper::LoadFileToArray(RawFileData, *FilePath) &&
 		ImageWrapper.IsValid() && 
 		ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num())
 		)
 	{
-		// ”ñˆ³k‚Ì‰æ‘œƒf[ƒ^‚ğæ“¾
-		const TArray<uint8>* UncompressedRawData = nullptr;
+		// éåœ§ç¸®ã®ç”»åƒãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—
+		//const TArray<uint8>* UncompressedRawData = nullptr;
+		TArray<uint8> UncompressedRawData;
 		if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData))
 		{
-			// Texture2D‚ğì¬
+			// Texture2Dã‚’ä½œæˆ
 			UTexture2D* NewTexture = UTexture2D::CreateTransient(ImageWrapper->GetWidth(), ImageWrapper->GetHeight(), PF_B8G8R8A8);
 			if (!NewTexture)
 			{
 				return false;
 			}
 
-			// ƒsƒNƒZƒ‹ƒf[ƒ^‚ğƒeƒNƒXƒ`ƒƒ‚É‘‚«‚Ş
-			void* TextureData = NewTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
-			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
-			NewTexture->PlatformData->Mips[0].BulkData.Unlock();
+			// ãƒ”ã‚¯ã‚»ãƒ«ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ†ã‚¯ã‚¹ãƒãƒ£ã«æ›¸ãè¾¼ã‚€
+			void* TextureData = NewTexture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+			FMemory::Memcpy(TextureData, UncompressedRawData.GetData(), UncompressedRawData.Num());
+			NewTexture->GetPlatformData()->Mips[0].BulkData.Unlock();
 			NewTexture->UpdateResource();
 
 			LoadedTexture = NewTexture;
@@ -240,12 +241,13 @@ bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTex
 #if WITH_EDITORONLY_DATA
 bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class UTexture2D*& LoadedTexture)
 {
-	// ‰æ‘œƒf[ƒ^‚ğ“Ç‚İ‚Ş
+	// ç”»åƒãƒ‡ãƒ¼ã‚¿ã‚’èª­ã¿è¾¼ã‚€
 	TArray<uint8> RawFileData;
 	if (FFileHelper::LoadFileToArray(RawFileData, *FilePath))
 	{
-		// ”ñˆ³k‚Ì‰æ‘œƒf[ƒ^‚ğæ“¾
-		const TArray<uint8>* UncompressedRawData = nullptr;
+		// éåœ§ç¸®ã®ç”»åƒãƒ‡ãƒ¼ã‚¿ã‚’å–å¾—
+		//const TArray<uint8>* UncompressedRawData = nullptr;
+		TArray<uint8> UncompressedRawData;
 		if (ImageWrapper.IsValid() &&
 			ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num()) &&
 			ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData)
@@ -256,7 +258,7 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 			int Width = ImageWrapper->GetWidth();
 			int Height = ImageWrapper->GetHeight();
 
-			// ƒpƒbƒP[ƒW‚ğì¬
+			// ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã‚’ä½œæˆ
 			FString PackagePath(TEXT("/PDFImporter/") + Filename + TEXT("/"));
 			FString AbsolutePackagePath = PagesDirectoryPath + TEXT("/") + Filename + TEXT("/");
 
@@ -264,36 +266,36 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 
 			PackagePath += Filename;
 
-			UPackage* Package = CreatePackage(nullptr, *PackagePath);
+			UPackage* Package = CreatePackage(*PackagePath);
 			Package->FullyLoad();
 
-			// ƒeƒNƒXƒ`ƒƒ‚ğì¬
+			// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’ä½œæˆ
 			FName TextureName = MakeUniqueObjectName(Package, UTexture2D::StaticClass(), FName(*Filename));
 			UTexture2D* NewTexture = NewObject<UTexture2D>(Package, TextureName, RF_Public | RF_Standalone);
 
-			// ƒeƒNƒXƒ`ƒƒ‚Ìİ’è
-			NewTexture->PlatformData = new FTexturePlatformData();
-			NewTexture->PlatformData->SizeX = Width;
-			NewTexture->PlatformData->SizeY = Height;
+			// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®è¨­å®š
+			NewTexture->SetPlatformData(new FTexturePlatformData());
+			NewTexture->GetPlatformData()->SizeX = Width;
+			NewTexture->GetPlatformData()->SizeY = Height;
 			NewTexture->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
 			NewTexture->NeverStream = false;
 
-			// ƒsƒNƒZƒ‹ƒf[ƒ^‚ğƒeƒNƒXƒ`ƒƒ‚É‘‚«‚Ş
+			// ãƒ”ã‚¯ã‚»ãƒ«ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ†ã‚¯ã‚¹ãƒãƒ£ã«æ›¸ãè¾¼ã‚€
 			FTexture2DMipMap* Mip = new FTexture2DMipMap();
-			NewTexture->PlatformData->Mips.Add(Mip);
+			NewTexture->GetPlatformData()->Mips.Add(Mip);
 			Mip->SizeX = Width;
 			Mip->SizeY = Height;
 			Mip->BulkData.Lock(LOCK_READ_WRITE);
-			uint8* TextureData = (uint8*)Mip->BulkData.Realloc(UncompressedRawData->Num());
-			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
+			uint8* TextureData = (uint8*)Mip->BulkData.Realloc(UncompressedRawData.Num());
+			FMemory::Memcpy(TextureData, UncompressedRawData.GetData(), UncompressedRawData.Num());
 			Mip->BulkData.Unlock();
 
-			// ƒeƒNƒXƒ`ƒƒ‚ğXV
+			// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’æ›´æ–°
 			NewTexture->AddToRoot();
-			NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedRawData->GetData());
+			NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedRawData.GetData());
 			NewTexture->UpdateResource();
 
-			// ƒpƒbƒP[ƒW‚ğ•Û‘¶
+			// ãƒ‘ãƒƒã‚±ãƒ¼ã‚¸ã‚’ä¿å­˜
 			Package->MarkPackageDirty();
 			FAssetRegistryModule::AssetCreated(NewTexture);
 			LoadedTexture = NewTexture;

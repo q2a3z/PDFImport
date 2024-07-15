@@ -352,7 +352,11 @@ UTexture* FPDFViewerToolkit::GetTexture( ) const
 
 bool FPDFViewerToolkit::HasValidTextureResource( ) const
 {
-	return Texture != nullptr && Texture->Resource != nullptr;
+//#if UE_VERSION_OLDER_THAN(5, 0, 0)
+//	return Texture != nullptr && Texture->Resource != nullptr;
+//#else
+	return Texture != nullptr;
+//#endif
 }
 
 

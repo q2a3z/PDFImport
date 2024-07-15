@@ -125,18 +125,18 @@ void FPDFViewerViewportClient::Draw(FViewport* Viewport, FCanvas* Canvas)
 	// the texture has transparency
 	if (Settings.Background == PDFViewerBackground_CheckeredFill)
 	{
-		Canvas->DrawTile( 0.0f, 0.0f, Viewport->GetSizeXY().X, Viewport->GetSizeXY().Y, 0.0f, 0.0f, (Viewport->GetSizeXY().X / CheckerboardTexture->GetSizeX()), (Viewport->GetSizeXY().Y / CheckerboardTexture->GetSizeY()), FLinearColor::White, CheckerboardTexture->Resource);
+		Canvas->DrawTile( 0.0f, 0.0f, Viewport->GetSizeXY().X, Viewport->GetSizeXY().Y, 0.0f, 0.0f, (Viewport->GetSizeXY().X / CheckerboardTexture->GetSizeX()), (Viewport->GetSizeXY().Y / CheckerboardTexture->GetSizeY()), FLinearColor::White, CheckerboardTexture->GetResource());
 	}
 	else if (Settings.Background == PDFViewerBackground_Checkered)
 	{
-		Canvas->DrawTile( XPos, YPos, Width, Height, 0.0f, 0.0f, (Width / CheckerboardTexture->GetSizeX()), (Height / CheckerboardTexture->GetSizeY()), FLinearColor::White, CheckerboardTexture->Resource);
+		Canvas->DrawTile( XPos, YPos, Width, Height, 0.0f, 0.0f, (Width / CheckerboardTexture->GetSizeX()), (Height / CheckerboardTexture->GetSizeY()), FLinearColor::White, CheckerboardTexture->GetResource());
 	}
 
 	float Exposure = FMath::Pow(2.0f, (float)PDFViewerViewportPtr.Pin()->GetExposureBias());
 
-	if ( Texture->Resource != nullptr )
+	if ( Texture->GetResource() != nullptr )
 	{
-		FCanvasTileItem TileItem( FVector2D( XPos, YPos ), Texture->Resource, FVector2D( Width, Height ), FLinearColor(Exposure, Exposure, Exposure) );
+		FCanvasTileItem TileItem( FVector2D( XPos, YPos ), Texture->GetResource(), FVector2D( Width, Height ), FLinearColor(Exposure, Exposure, Exposure) );
 		TileItem.BlendMode = PDFViewerPtr.Pin()->GetColourChannelBlendMode();
 		//TileItem.BatchedElementParameters = BatchedElementParameters;
 		Canvas->DrawItem( TileItem );
@@ -347,11 +347,11 @@ void FPDFViewerViewportClient::DestroyCheckerboardTexture()
 {
 	if (CheckerboardTexture)
 	{
-		if (CheckerboardTexture->Resource)
+		if (CheckerboardTexture->GetResource())
 		{
 			CheckerboardTexture->ReleaseResource();
 		}
-		CheckerboardTexture->MarkPendingKill();
+		//CheckerboardTexture->MarkPendingKill();
 		CheckerboardTexture = NULL;
 	}
 }
