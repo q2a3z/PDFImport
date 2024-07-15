@@ -12,6 +12,7 @@
 #include "Widgets/Views/STableRow.h"
 #include "Widgets/Input/SCheckBox.h"
 #include "Widgets/Text/STextBlock.h"
+#include "EditorStyleSet.h"
 
 #define LOCTEXT_NAMESPACE "PDFImportOptions"
 

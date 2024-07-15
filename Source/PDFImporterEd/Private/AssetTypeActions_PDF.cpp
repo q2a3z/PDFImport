@@ -1,6 +1,6 @@
 #include "AssetTypeActions_PDF.h"
 #include "PDF.h"
-#include "IPDFViewerModule.h"
+#include "Interfaces/IPDFViewerModule.h"
 
 #define LOCTEXT_NAMESPACE "AssetTypeActions"
 

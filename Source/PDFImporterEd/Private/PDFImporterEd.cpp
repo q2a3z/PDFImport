@@ -2,18 +2,18 @@
 
 #include "PDFImporterEd.h"
 #include "AssetTypeActions_PDF.h"
-#include "SlateStyle.h"
-#include "IPluginManager.h"
+#include "Styling/SlateStyle.h"
+#include "Interfaces/IPluginManager.h"
 
 #define LOCTEXT_NAMESPACE "FPDFImporterModuleEd"
 
 void FPDFImporterEdModule::StartupModule()
 {
-	// PDFƒAƒZƒbƒg‚ÌAssetTypeActions‚ðAssetToolsƒ‚ƒWƒ…[ƒ‹‚É“o˜^
+	// PDFã‚¢ã‚»ãƒƒãƒˆã®AssetTypeActionsã‚’AssetToolsãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ«ã«ç™»éŒ²
 	PDF_AssetTypeActions = MakeShareable(new FAssetTypeActions_PDF);
 	FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools")).Get().RegisterAssetTypeActions(PDF_AssetTypeActions.ToSharedRef());
 
-	// PDFƒAƒZƒbƒg‚ÌƒAƒCƒRƒ“‚ð“o˜^
+	// PDFã‚¢ã‚»ãƒƒãƒˆã®ã‚¢ã‚¤ã‚³ãƒ³ã‚’ç™»éŒ²
 	StyleSet = MakeShareable(new FSlateStyleSet(TEXT("PdfStyle")));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin(TEXT("PDFImporter"))->GetBaseDir());
 	

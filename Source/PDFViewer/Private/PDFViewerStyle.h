@@ -1,8 +1,8 @@
 #pragma once
 
 #include "UnrealEd.h"
-#include "SlateStyle.h"
-#include "IPluginManager.h"
+#include "Styling/SlateStyle.h"
+#include "Interfaces/IPluginManager.h"
 #define IMAGE_BRUSH( RelativePath, ... ) FSlateImageBrush(RootToContentDir(RelativePath, TEXT(".png")), __VA_ARGS__)
 
 class FPDFViewerStyle : public FSlateStyleSet

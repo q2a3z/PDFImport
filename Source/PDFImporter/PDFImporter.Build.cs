@@ -42,10 +42,13 @@ public class PDFImporter : ModuleRules
         {
             Platform = "Win64";
         }
+#if UE_5_0_OR_LATER
+#else
         else if(Target.Platform == UnrealTargetPlatform.Win32)
         {
             Platform = "Win32";
         }
+#endif
         else
         {
             throw new Exception(string.Format("Unsupported platform {0}", Target.Platform.ToString()));

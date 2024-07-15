@@ -87,7 +87,10 @@ public:
 public:
 
 	// FGCObject interface
-
+	virtual FString GetReferencerName() const
+	{
+		return "FPDFViewerToolkit";
+	}
 	virtual void AddReferencedObjects( FReferenceCollector& Collector ) override;
 	
 protected:

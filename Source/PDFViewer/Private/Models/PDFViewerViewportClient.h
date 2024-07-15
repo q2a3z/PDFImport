@@ -29,6 +29,10 @@ public:
 	virtual UWorld* GetWorld() const override { return nullptr; }
 
 	/** FGCObject interface */
+	virtual FString GetReferencerName() const
+	{
+		return "FPDFViewerViewportClient";
+	}
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
 	/** Modifies the checkerboard texture's data */

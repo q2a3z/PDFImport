@@ -8,6 +8,7 @@
 #include "Editor/MainFrame/Public/Interfaces/IMainFrameModule.h"
 #include "ObjectTools.h"
 #include "Editor.h"
+#include "Misc/EngineVersionComparison.h"
 
 #define LOCTEXT_NAMESPACE "PDFFactory"
 
@@ -19,7 +20,7 @@ UPDFFactory::UPDFFactory(const FObjectInitializer& ObjectInitializer)
 	bText = true;
 	Formats.Add(TEXT("pdf;PDF File"));
 
-	// �A�Z�b�g���폜���ꂽ���̃C�x���g��o�^
+	// アセットが削除された時のイベントを登録
 	FEditorDelegates::OnAssetsPreDelete.AddUObject(this, &UPDFFactory::OnAssetsPreDelete);
 
 	FPDFImporterModule& PDFImporterModule = FModuleManager::LoadModuleChecked<FPDFImporterModule>(FName("PDFImporter"));
@@ -53,7 +54,15 @@ UObject* UPDFFactory::FactoryCreateFile(
 
 	if (Options->ShouldImport())
 	{
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
 		UPDF* NewPDF = CastChecked<UPDF>(StaticConstructObject_Internal(InClass, InParent, InName, Flags));
+#else		
+		FStaticConstructObjectParameters Params(InClass);
+		Params.Outer = InParent;
+		Params.Name = InName;
+		Params.SetFlags = Flags;
+		UPDF* NewPDF = CastChecked<UPDF>(StaticConstructObject_Internal(Params));
+#endif
 		UPDF* LoadedPDF = GhostscriptCore->ConvertPdfToPdfAsset(Filename, Result->Dpi, Result->FirstPage, Result->LastPage, true);
 
 		if (LoadedPDF != nullptr)
@@ -116,7 +125,7 @@ EReimportResult::Type UPDFFactory::Reimport(UObject* Obj)
 		return EReimportResult::Failed;
 	}
 
-	// �Â��y�[�W�̃e�N�X�`���A�Z�b�g���폜
+	// 古いページのテクスチャアセットを削除
 	if(!DeletePageTextures(PDF))
 	{
 		FString DirectoryPath = FPaths::Combine(FGhostscriptCore::PagesDirectoryPath, FPaths::GetBaseFilename(PDF->Filename));
