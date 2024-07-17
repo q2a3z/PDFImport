@@ -10,6 +10,8 @@
 #include "IImageWrapper.h"
 #include "Interfaces/IPluginManager.h"
 
+#include "Misc/EngineVersionComparison.h"
+
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include <Windows.h>
 #include "Windows/HideWindowsPlatformTypes.h"
@@ -212,8 +214,11 @@ bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTex
 		)
 	{
 		// 非圧縮の画像データを取得
-		//const TArray<uint8>* UncompressedRawData = nullptr;
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
+		const TArray<uint8>* UncompressedRawData = nullptr;
+#else
 		TArray<uint8> UncompressedRawData;
+#endif		
 		if (ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData))
 		{
 			// Texture2Dを作成
@@ -224,10 +229,21 @@ bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTex
 			}
 
 			// ピクセルデータをテクスチャに書き込む
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
+			void* TextureData = NewTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
+			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
+#else
+			FMemory::Memcpy(TextureData, UncompressedRawData.GetData(), UncompressedRawData.Num());
+#endif	
+			NewTexture->PlatformData->Mips[0].BulkData.Unlock();
+			NewTexture->UpdateResource();
+#else
 			void* TextureData = NewTexture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
 			FMemory::Memcpy(TextureData, UncompressedRawData.GetData(), UncompressedRawData.Num());
 			NewTexture->GetPlatformData()->Mips[0].BulkData.Unlock();
 			NewTexture->UpdateResource();
+#endif			
 
 			LoadedTexture = NewTexture;
 
@@ -246,8 +262,11 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 	if (FFileHelper::LoadFileToArray(RawFileData, *FilePath))
 	{
 		// 非圧縮の画像データを取得
-		//const TArray<uint8>* UncompressedRawData = nullptr;
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
+		const TArray<uint8>* UncompressedRawData = nullptr;
+#else
 		TArray<uint8> UncompressedRawData;
+#endif
 		if (ImageWrapper.IsValid() &&
 			ImageWrapper->SetCompressed(RawFileData.GetData(), RawFileData.Num()) &&
 			ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedRawData)
@@ -266,7 +285,11 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 
 			PackagePath += Filename;
 
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
+			UPackage* Package = CreatePackage(nullptr, *PackagePath);
+#else
 			UPackage* Package = CreatePackage(*PackagePath);
+#endif
 			Package->FullyLoad();
 
 			// テクスチャを作成
@@ -274,25 +297,44 @@ bool FGhostscriptCore::CreateTextureAssetFromFile(const FString& FilePath, class
 			UTexture2D* NewTexture = NewObject<UTexture2D>(Package, TextureName, RF_Public | RF_Standalone);
 
 			// テクスチャの設定
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
+			NewTexture->PlatformData = new FTexturePlatformData();
+			NewTexture->PlatformData->SizeX = Width;
+			NewTexture->PlatformData->SizeY = Height;
+#else
 			NewTexture->SetPlatformData(new FTexturePlatformData());
 			NewTexture->GetPlatformData()->SizeX = Width;
 			NewTexture->GetPlatformData()->SizeY = Height;
+#endif
 			NewTexture->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
 			NewTexture->NeverStream = false;
 
 			// ピクセルデータをテクスチャに書き込む
 			FTexture2DMipMap* Mip = new FTexture2DMipMap();
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
+			NewTexture->PlatformData->Mips.Add(Mip);
+#else
 			NewTexture->GetPlatformData()->Mips.Add(Mip);
+#endif
 			Mip->SizeX = Width;
 			Mip->SizeY = Height;
 			Mip->BulkData.Lock(LOCK_READ_WRITE);
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
+			uint8* TextureData = (uint8*)Mip->BulkData.Realloc(UncompressedRawData->Num());
+			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
+#else
 			uint8* TextureData = (uint8*)Mip->BulkData.Realloc(UncompressedRawData.Num());
 			FMemory::Memcpy(TextureData, UncompressedRawData.GetData(), UncompressedRawData.Num());
+#endif
 			Mip->BulkData.Unlock();
 
 			// テクスチャを更新
 			NewTexture->AddToRoot();
+#if UE_VERSION_OLDER_THAN(4, 27, 0)
+			NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedRawData->GetData());
+#else
 			NewTexture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, UncompressedRawData.GetData());
+#endif
 			NewTexture->UpdateResource();
 
 			// パッケージを保存

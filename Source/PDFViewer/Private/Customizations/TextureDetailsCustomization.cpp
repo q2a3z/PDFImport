@@ -2,6 +2,7 @@
 
 #include "Customizations/TextureDetailsCustomization.h"
 #include "Misc/MessageDialog.h"
+#include "Misc/EngineVersionComparison.h"
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "Engine/Texture.h"
 #include "Engine/Texture2D.h"
@@ -202,9 +203,11 @@ void FTextureDetails::OnBeginSliderMovement()
 
 	bIsUsingSlider = true;
 
-	//GEditor->BeginTransaction(TEXT("TextureDetails"), LOCTEXT("SetMaximumTextureSize", "Edit Maximum Texture Size"), MaxTextureSizePropertyHandle->GetProperty());
-	//
-	GEditor->BeginTransaction(LOCTEXT("SetMaximumTextureSize", "Edit Maximum Texture Size"));
+#if UE_VERSION_NEWER_THAN(4, 25, 0)
+	GEditor->BeginTransaction(TEXT("TextureDetails"),LOCTEXT("SetMaximumTextureSize", "Edit Maximum Texture Size"),MaxTextureSizePropertyHandle->GetProperty()->GetOwnerUObject());
+#else
+	GEditor->BeginTransaction(TEXT("TextureDetails"), LOCTEXT("SetMaximumTextureSize", "Edit Maximum Texture Size"), MaxTextureSizePropertyHandle->GetProperty());
+#endif
 }
 
 

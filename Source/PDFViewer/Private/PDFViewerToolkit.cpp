@@ -36,6 +36,9 @@
 #include "Widgets/Input/SNumericEntryBox.h"
 #include "DeviceProfiles/DeviceProfile.h"
 #include "Curves/CurveLinearColorAtlas.h"
+
+#include "Misc/EngineVersionComparison.h"
+
 #include "PDFViewerStyle.h"
 #include "PDF.h"
 
@@ -352,11 +355,13 @@ UTexture* FPDFViewerToolkit::GetTexture( ) const
 
 bool FPDFViewerToolkit::HasValidTextureResource( ) const
 {
-//#if UE_VERSION_OLDER_THAN(5, 0, 0)
-//	return Texture != nullptr && Texture->Resource != nullptr;
-//#else
-	return Texture != nullptr;
-//#endif
+
+	return Texture != nullptr && 
+#if UE_VERSION_OLDER_THAN(5, 0, 0)
+	Texture->Resource != nullptr;
+#else
+	Texture->GetResource() != nullptr;
+#endif
 }
 
 
