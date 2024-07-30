@@ -214,7 +214,7 @@ bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTex
 		)
 	{
 		// 非圧縮の画像データを取得
-#if UE_VERSION_OLDER_THAN(4, 27, 0)
+#if UE_VERSION_OLDER_THAN(4, 25, 0)
 		const TArray<uint8>* UncompressedRawData = nullptr;
 #else
 		TArray<uint8> UncompressedRawData;
@@ -231,7 +231,7 @@ bool FGhostscriptCore::LoadTexture2DFromFile(const FString& FilePath, class UTex
 			// ピクセルデータをテクスチャに書き込む
 #if UE_VERSION_OLDER_THAN(5, 0, 0)
 			void* TextureData = NewTexture->PlatformData->Mips[0].BulkData.Lock(LOCK_READ_WRITE);
-#if UE_VERSION_OLDER_THAN(4, 27, 0)
+#if UE_VERSION_OLDER_THAN(4, 25, 0)
 			FMemory::Memcpy(TextureData, UncompressedRawData->GetData(), UncompressedRawData->Num());
 #else
 			FMemory::Memcpy(TextureData, UncompressedRawData.GetData(), UncompressedRawData.Num());

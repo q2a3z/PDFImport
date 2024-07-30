@@ -36,6 +36,8 @@ public class PDFImporter : ModuleRules
 			);
 
         string GhostscriptPath = Path.Combine(ModuleDirectory, "..", "..", "ThirdParty");
+        string PDFiumPath = Path.Combine(ModuleDirectory, "..", "..", "ThirdParty");
+
         string Platform = string.Empty;
 	
         if(Target.Platform == UnrealTargetPlatform.Win64)
@@ -49,6 +51,15 @@ public class PDFImporter : ModuleRules
             Platform = "Win32";
         }
 #endif
+        else if (Target.Platform == UnrealTargetPlatform.Mac)
+        {
+            //if (Target.Version.MajorVersion >= 5 && Target.Version.MinorVersion >= 1)
+            Platform = "OSX";
+        }
+        else if (Target.Platform == UnrealTargetPlatform.Linux)
+        {
+            Platform = "Linux";
+        }
         else
         {
             throw new Exception(string.Format("Unsupported platform {0}", Target.Platform.ToString()));
@@ -62,5 +73,19 @@ public class PDFImporter : ModuleRules
         }
 
         RuntimeDependencies.Add(GhostscriptPath);
+        
+        PDFiumPath = Path.Combine(PDFiumPath, Platform, "pdfium.dll");
+        
+        if(!File.Exists(PDFiumPath))
+        {
+            throw new Exception(string.Format("File not found {0}", PDFiumPath));
+        }
+        RuntimeDependencies.Add(PDFiumPath);
+        //string Location_PDFium = "../../ThirdParty";
+        string Location_PDFium = Path.Combine(ModuleDirectory, "..", "..", "ThirdParty","include");
+        PrivateIncludePaths.Add(Location_PDFium);
+
+        PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "..", "..", "ThirdParty",Platform,"pdfium.dll.lib"));
+        PublicDelayLoadDLLs.Add("pdfium.dll");        
     }
 }

@@ -51,6 +51,15 @@ public:
 	UPROPERTY()
 	FDateTime TimeStamp;
 
+	UPROPERTY(BlueprintReadOnly)
+	FString Bytes_String;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector2D Original_Resolution;
+
+	UPROPERTY(BlueprintReadOnly)
+	float Sampling;
+
 public:
 	// Get the texture of the specified page
 	UFUNCTION(BlueprintCallable, Category = "PDF")
